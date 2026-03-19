@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>CPP Online Compiler</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+            padding: 10px;
+            gap: 10px;
+            height: 100%;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #333;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .header h1 {
+            font-size: 1.3rem;
+            font-weight: 400;
+            color: #fff;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4CAF50;
+        }
+
+        .status-indicator.error {
+            background: #f44336;
+        }
+
+        .status-indicator.waiting {
+            background: #ff9800;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .editor-section {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            background: #252526;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #333;
+            min-height: 200px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            background: #2d2d2d;
+            border-bottom: 1px solid #333;
+        }
+
+        .section-header h2 {
+            font-size: 0.95rem;
+            font-weight: 400;
+            color: #ccc;
+        }
+
+        .button {
+            background: #0e639c;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .button:hover {
+            background: #1177bb;
+        }
+
+        .button:active {
+            transform: translateY(1px);
+            background: #0a4a75;
+        }
+
+        .button.danger {
+            background: #a12626;
+        }
+
+        .button.danger:hover {
+            background: #c42b2b;
+        }
+
+        .code-editor {
+            flex: 1;
+            background: #1e1e1e;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            padding: 12px;
+            border: none;
+            outline: none;
+            color: #d4d4d4;
+            resize: none;
+            width: 100%;
+            min-height: 150px;
+        }
+
+        .terminal-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #252526;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #333;
+            min-height: 200px;
+        }
+
+        .terminal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            background: #2d2d2d;
+            border-bottom: 1px solid #333;
+        }
+
+        .terminal-tabs {
+            display: flex;
+            gap: 2px;
+        }
+
+        .tab {
+            padding: 4px 12px;
+            background: #3d3d3d;
+            border: none;
+            color: #999;
+            cursor: pointer;
+            font-size: 0.85rem;
+            border-radius: 4px 4px 0 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .tab.active {
+            background: #252526;
+            color: #fff;
+        }
+
+        .terminal-content {
+            flex: 1;
+            background: #1e1e1e;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            padding: 12px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 250px;
+        }
+
+        .output-line {
+            margin: 2px 0;
+            line-height: 1.4;
+        }
+
+        .output-line.error {
+            color: #f48771;
+        }
+
+        .output-line.warning {
+            color: #cca700;
+        }
+
+        .output-line.success {
+            color: #89d185;
+        }
+
+        .output-line.input {
+            color: #569cd6;
+            font-weight: 500;
+        }
+
+        .output-line.system {
+            color: #808080;
+            font-style: italic;
+        }
+
+        .terminal-input-line {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            background: #2d2d2d;
+            border-top: 1px solid #333;
+        }
+
+        .terminal-input-line.active {
+            background: #1e3a5f;
+        }
+
+        .terminal-input-line span {
+            color: #569cd6;
+            margin-right: 8px;
+            font-weight: bold;
+        }
+
+        .terminal-input {
+            flex: 1;
+            background: #1e1e1e;
+            border: 1px solid #333;
+            color: #d4d4d4;
+            padding: 8px 10px;
+            font-family: 'Consolas', monospace;
+            font-size: 14px;
+            outline: none;
+            border-radius: 4px;
+        }
+
+        .terminal-input:focus {
+            border-color: #0e639c;
+        }
+
+        .terminal-input:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .footer {
+            display: flex;
+            gap: 15px;
+            padding-top: 8px;
+            border-top: 1px solid #333;
+            font-size: 0.75rem;
+            color: #666;
+            flex-wrap: wrap;
+        }
+
+        .footer span {
+            color: #999;
+        }
+
+        .loading {
+            display: none;
+            width: 14px;
+            height: 14px;
+            border: 2px solid #333;
+            border-top-color: #0e639c;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .input-badge {
+            background: #ff9800;
+            color: #000;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            margin-left: 8px;
+        }
+
+        @media (max-width: 600px) {
+            .container { padding: 8px; }
+            .header h1 { font-size: 1.1rem; }
+            .button { padding: 8px 14px; font-size: 0.85rem; }
+            .code-editor { font-size: 13px; }
+            .terminal-content { font-size: 12px; padding: 8px; max-height: 200px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>CPP Online Compiler</h1>
+            <div class="status" id="status">
+                <span class="status-indicator" id="statusIndicator"></span>
+                <span id="statusText">Ready</span>
+                <div class="loading" id="loading"></div>
+            </div>
+        </div>
+
+        <div class="editor-section">
+            <div class="section-header">
+                <h2>main.cpp</h2>
+                <div style="display: flex; gap: 8px;">
+                    <button class="button danger" id="stopBtn" style="display: none;">&#9209; Stop</button>
+                    <button class="button" id="runBtn">&#9654; Run</button>
+                </div>
+            </div>
+            <textarea id="code" class="code-editor" placeholder="// Write your C++ code here..." spellcheck="false">#include &lt;iostream&gt;
+#include &lt;string&gt;
+
+int main() {
+    std::string name;
+
+    std::cout &lt;&lt; "Enter your name: ";
+    std::getline(std::cin, name);
+
+    std::cout &lt;&lt; "Enter your age: ";
+    int age;
+    std::cin &gt;&gt; age;
+
+    std::cout &lt;&lt; "Hello, " &lt;&lt; name &lt;&lt; "! You are " &lt;&lt; age &lt;&lt; " years old." &lt;&lt; std::endl;
+
+    return 0;
+}</textarea>
+        </div>
+
+        <div class="terminal-section">
+            <div class="terminal-header">
+                <div class="terminal-tabs">
+                    <button class="tab active" data-tab="output">Output</button>
+                    <button class="tab" data-tab="input">Input <span id="inputBadge" class="input-badge" style="display: none;">!</span></button>
+                </div>
+                <button class="button" id="clearBtn" style="background: #333;">Clear</button>
+            </div>
+            <div id="terminalOutput" class="terminal-content">
+                <div class="output-line system">Welcome to CPP Online Compiler</div>
+                <div class="output-line system">Click Run to compile and execute your code</div>
+            </div>
+            <div class="terminal-input-line" id="inputLine" style="display: none;">
+                <span>$</span>
+                <input type="text" id="terminalInput" class="terminal-input" placeholder="Enter input..." autocomplete="off">
+            </div>
+        </div>
+
+        <div class="footer">
+            <div><span>Status:</span> <span id="compileStatus">Ready</span></div>
+            <div><span>Time:</span> <span id="compileTime">-</span></div>
+            <div><span>Memory:</span> <span id="compileMemory">-</span></div>
+        </div>
+    </div>
+
+    <script>
+    const codeEditor = document.getElementById('code');
+    const runBtn = document.getElementById('runBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const terminalOutput = document.getElementById('terminalOutput');
+    const terminalInput = document.getElementById('terminalInput');
+    const inputLine = document.getElementById('inputLine');
+    const statusIndicator = document.getElementById('statusIndicator');
+    const statusText = document.getElementById('statusText');
+    const loading = document.getElementById('loading');
+    const compileStatus = document.getElementById('compileStatus');
+    const compileTime = document.getElementById('compileTime');
+    const compileMemory = document.getElementById('compileMemory');
+    const tabs = document.querySelectorAll('.tab');
+    const inputBadge = document.getElementById('inputBadge');
+
+    let currentSessionId = null;
+    let waitingForInput = false;
+    let outputStreamSource = null;
+    let statusInterval = null;
+
+    // Tab switching
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+
+            if (tab.dataset.tab === 'input') {
+                inputLine.style.display = 'flex';
+                if (waitingForInput) {
+                    terminalInput.disabled = false;
+                    terminalInput.placeholder = 'Enter input...';
+                    terminalInput.focus();
+                    inputLine.classList.add('active');
+                } else {
+                    terminalInput.disabled = true;
+                    terminalInput.placeholder = 'Program is not running - run code first';
+                    inputLine.classList.remove('active');
+                }
+            } else {
+                // FIX: hide input line when switching back to output tab
+                inputLine.style.display = 'none';
+            }
+        });
+    });
+
+    clearBtn.addEventListener('click', () => {
+        terminalOutput.innerHTML = '';
+        addOutput('Terminal cleared', 'system');
+    });
+
+    stopBtn.addEventListener('click', () => {
+        if (currentSessionId) {
+            fetch('/stop', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sessionId: currentSessionId })
+            }).finally(() => {
+                stopProgram();
+            });
+        } else {
+            stopProgram();
+        }
+    });
+
+    function stopProgram() {
+        if (outputStreamSource) {
+            outputStreamSource.close();
+            outputStreamSource = null;
+        }
+        if (statusInterval) {
+            clearInterval(statusInterval);
+            statusInterval = null;
+        }
+
+        waitingForInput = false;
+        currentSessionId = null;
+        runBtn.disabled = false;
+        stopBtn.style.display = 'none';
+        terminalInput.disabled = true;
+        inputBadge.style.display = 'none';
+        setStatus('ready', 'Stopped');
+        addOutput('Program stopped by user', 'system');
+
+        document.querySelector('[data-tab="output"]').click();
+    }
+
+    terminalInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && waitingForInput && currentSessionId) {
+            const input = terminalInput.value;
+
+            addOutput('> ' + input, 'input');
+
+            terminalInput.disabled = true;
+            terminalInput.value = '';
+
+            fetch('/input', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ input: input, sessionId: currentSessionId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    addOutput('Error sending input: ' + data.error, 'error');
+                }
+            })
+            .catch(err => {
+                addOutput('Error: ' + err.message, 'error');
+            });
+        }
+    });
+
+    runBtn.addEventListener('click', async () => {
+        const code = codeEditor.value;
+        currentSessionId = Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+
+        setLoading(true);
+        runBtn.disabled = true;
+        stopBtn.style.display = 'inline-block';
+        terminalOutput.innerHTML = '';
+        addOutput('Compiling...', 'system');
+
+        try {
+            const response = await fetch('/compile', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: code, sessionId: currentSessionId })
+            });
+
+            if (!response.ok) {
+                throw new Error('Server error: ' + response.status);
+            }
+
+            const result = await response.json();
+
+            if (result.success) {
+                // FIX: only set running status here, not success — success is set when program finishes
+                setStatus('waiting', 'Running');
+
+                if (result.output && result.output.trim()) {
+                    addOutput('--- OUTPUT ---', 'system');
+                    result.output.split('\n').forEach(line => {
+                        addOutput(line, 'output');
+                    });
+                }
+
+                if (result.stderr && result.stderr.trim()) {
+                    addOutput('--- STDERR ---', 'system');
+                    result.stderr.split('\n').forEach(line => {
+                        if (line.trim()) addOutput(line, 'error');
+                    });
+                }
+
+                startOutputStream(currentSessionId);
+                startStatusCheck(currentSessionId);
+
+            } else {
+                setStatus('error', 'Compile error');
+
+                if (result.errors) {
+                    addOutput('--- COMPILE ERRORS ---', 'system');
+                    result.errors.split('\n').forEach(line => {
+                        if (line.trim()) addOutput(line, 'error');
+                    });
+                }
+
+                compileStatus.textContent = 'Failed';
+                runBtn.disabled = false;
+                stopBtn.style.display = 'none';
+            }
+
+            compileTime.textContent = result.executionTime || '-';
+            compileMemory.textContent = result.memory || '-';
+
+        } catch (error) {
+            setStatus('error', 'Error');
+            addOutput('Error: ' + error.message, 'error');
+            addOutput('Check that the server is running on port 3000', 'system');
+            runBtn.disabled = false;
+            stopBtn.style.display = 'none';
+        } finally {
+            setLoading(false);
+        }
+    });
+
+    function startOutputStream(sessionId) {
+        if (outputStreamSource) {
+            outputStreamSource.close();
+        }
+
+        outputStreamSource = new EventSource('/output-stream/' + sessionId);
+
+        outputStreamSource.onmessage = (event) => {
+            const lines = event.data.split('\n');
+            lines.forEach(line => {
+                if (line.trim()) {
+                    if (line.startsWith('[') && line.includes('][')) {
+                        addOutput(line, 'system');
+                    } else {
+                        addOutput(line, 'output');
+                    }
+                }
+            });
+        };
+
+        // FIX: close stream on error to avoid memory leak
+        outputStreamSource.onerror = () => {
+            if (outputStreamSource) {
+                outputStreamSource.close();
+                outputStreamSource = null;
+            }
+        };
+    }
+
+    function startStatusCheck(sessionId) {
+        if (statusInterval) {
+            clearInterval(statusInterval);
+        }
+
+        statusInterval = setInterval(async () => {
+            try {
+                const response = await fetch('/program-status/' + sessionId);
+                const status = await response.json();
+
+                if (status.waitingForInput) {
+                    waitingForInput = true;
+                    inputBadge.style.display = 'inline-block';
+                    setStatus('waiting', 'Waiting for input');
+
+                    const activeTab = document.querySelector('.tab.active');
+                    if (activeTab && activeTab.dataset.tab === 'input') {
+                        terminalInput.disabled = false;
+                        terminalInput.focus();
+                        inputLine.classList.add('active');
+                    }
+                } else {
+                    waitingForInput = false;
+                    inputBadge.style.display = 'none';
+                    terminalInput.disabled = true;
+                    inputLine.classList.remove('active');
+                }
+
+                if (status.finished) {
+                    clearInterval(statusInterval);
+                    statusInterval = null;
+
+                    // FIX: set success status only when program actually finishes
+                    setStatus('success', 'Finished');
+                    compileStatus.textContent = 'Success';
+                    runBtn.disabled = false;
+                    stopBtn.style.display = 'none';
+
+                    if (status.executionTime) {
+                        compileTime.textContent = status.executionTime;
+                    }
+
+                    if (outputStreamSource) {
+                        outputStreamSource.close();
+                        outputStreamSource = null;
+                    }
+
+                    addOutput('--- Program finished ---', 'system');
+                }
+
+            } catch (error) {
+                console.error('Status check error:', error);
+            }
+        }, 500);
+    }
+
+    function addOutput(text, type = 'output') {
+        const line = document.createElement('div');
+        // FIX: removed console.log(line) debug statement
+        line.className = 'output-line ' + type;
+
+        if (type === 'input') {
+            line.innerHTML = '<span style="color: #569cd6;">&gt;</span> ' + escapeHtml(text);
+        } else if (type === 'system') {
+            line.innerHTML = '<span style="color: #808080;">&#9881;</span> ' + escapeHtml(text);
+        } else if (type === 'error') {
+            line.innerHTML = '<span style="color: #f48771;">&times;</span> ' + escapeHtml(text);
+        } else if (type === 'warning') {
+            line.innerHTML = '<span style="color: #cca700;">&#9888;</span> ' + escapeHtml(text);
+        } else if (type === 'success') {
+            line.innerHTML = '<span style="color: #89d185;">&#10003;</span> ' + escapeHtml(text);
+        } else {
+            line.textContent = text;
+        }
+
+        terminalOutput.appendChild(line);
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    }
+
+    // FIX: added escapeHtml to prevent XSS when rendering user/program output as innerHTML
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function setLoading(isLoading) {
+        loading.style.display = isLoading ? 'inline-block' : 'none';
+        if (isLoading) {
+            statusIndicator.className = 'status-indicator';
+            statusText.textContent = 'Compiling...';
+        }
+    }
+
+    function setStatus(type, message) {
+        statusIndicator.className = 'status-indicator ' + type;
+        statusText.textContent = message;
+    }
+
+    document.addEventListener('touchstart', (e) => {
+        if (e.touches.length > 1) e.preventDefault();
+    }, { passive: false });
+
+    if ('visualViewport' in window) {
+        window.visualViewport.addEventListener('resize', () => {
+            document.body.style.height = window.visualViewport.height + 'px';
+        });
+    }
+    </script>
+</body>
+</html>
